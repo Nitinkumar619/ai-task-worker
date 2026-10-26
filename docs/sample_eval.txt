@@ -1,0 +1,12 @@
+
+scenario            result  steps  notes
+happy               PASS    11     
+resilient           PASS    15     
+clarify             PASS    12     
+clarify_unanswered  PASS    6      
+approval_yes        PASS    11     
+approval_no         PASS    9      
+idempotent          PASS    20     
+generalize_report   PASS    16     
+
+ALL PASSED

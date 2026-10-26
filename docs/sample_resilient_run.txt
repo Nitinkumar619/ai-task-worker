@@ -1,0 +1,46 @@
+Scenario: Flaky reads + session expiry + write that commits then 500s  faults={'flaky_get': 2, 'session_expiry': 4, 'commit_then_500': 1}
+
+▶ Task: Find the latest invoice from Globex in the inbox, extract the amount and due date, enter it into AcmePay as a new bill, and tell me once it is done.
+  brain=OfflineBrain
+  💭 Planning the work.
+  [ 1] update_plan {'steps': '["Find invoices from \'Globex\' in inbox/", \'Read them, ignore non-invoi…'}
+       ✓  Plan recorded.
+  [ 2] search_files {'query': 'Globex', 'directory': 'inbox'}
+       ✓  inbox/globex_credit_note.txt: (filename match) globex_credit_note.txt
+  [ 3] read_file {'path': 'inbox/globex_credit_note.txt'}
+       ✓  CREDIT NOTE #CN-0007
+  [ 4] read_file {'path': 'inbox/globex_oct_invoice.pdf'}
+       ✓  INVOICE #GX-9913
+  [ 5] read_file {'path': 'inbox/globex_sept.txt'}
+       ✓  INVOICE #GX-9871
+  [ 6] remember {'key': 'invoice', 'source': 'inbox/globex_oct_invoice.pdf', 'value': 'vendor=Globex Corporation; number=GX-9913; issued=2026-10-14; due=2026…'}
+       ✓  Remembered invoice.
+  [ 7] web_open {'url': 'http://127.0.0.1:34645/bills'}
+       ✓  http://127.0.0.1:34645/login?next=/bills | TITLE: Sign in - AcmePay
+  💭 The app wants a login; authenticating with the sandbox credentials.
+  [ 8] web_submit_form {'form_id': 'F1', 'values': "{'username': '{{secret:ERP_USERNAME}}', 'password': '{{secret:ERP_PASS…"}
+       ↻ GET http://127.0.0.1:34645/bills failed (HTTP 503); retry 1/3
+       ↻ GET http://127.0.0.1:34645/bills failed (HTTP 503); retry 2/3
+       ✓  http://127.0.0.1:34645/bills | TITLE: Bills - AcmePay
+  [ 9] web_open {'url': 'http://127.0.0.1:34645/bills/new'}
+       ✓  http://127.0.0.1:34645/bills/new | TITLE: New bill - AcmePay
+  [10] web_submit_form {'form_id': 'F1', 'values': "{'vendor': 'Globex Corporation', 'invoice_number': 'GX-9913', 'amount'…"}
+       ✗ permanent http://127.0.0.1:34645/bills | TITLE: Sign in - AcmePay
+  💭 The app wants a login; authenticating with the sandbox credentials.
+  [11] web_submit_form {'form_id': 'F1', 'values': "{'username': '{{secret:ERP_USERNAME}}', 'password': '{{secret:ERP_PASS…"}
+       ✓  http://127.0.0.1:34645/bills | TITLE: Bills - AcmePay
+  [12] web_open {'url': 'http://127.0.0.1:34645/bills/new'}
+       ✓  http://127.0.0.1:34645/bills/new | TITLE: New bill - AcmePay
+  [13] web_submit_form {'form_id': 'F1', 'values': "{'vendor': 'Globex Corporation', 'invoice_number': 'GX-9913', 'amount'…"}
+       ✗ ambiguous_write AMBIGUOUS WRITE FAILURE: Server returned HTTP 500 for POST http://127.0.0.1:34645/bills. The write may or may 
+  [14] web_open {'url': 'http://127.0.0.1:34645/bills'}
+       ✓  http://127.0.0.1:34645/bills | TITLE: Bills - AcmePay
+  [15] finish {'outcome': 'success', 'summary': 'Entered Globex Corporation invoice GX-9913 into AcmePay: 3,120.75 USD,…', 'claims': "[{'statement': 'AcmePay has a bill for invoice GX-9913 with the right …"}
+       🔎 verify: PASS All 4 expected values found at http://127.0.0.1:34645/bills.
+       ✓  All claims verified independently. Run complete.
+
+■ COMPLETED  (15 steps, 0.1s)
+  Entered Globex Corporation invoice GX-9913 into AcmePay: 3,120.75 USD, due 2026-11-13 (latest invoice by date, from inbox/globex_oct_invoice.pdf).
+  report: /home/claude/ai-task-worker/runs/20261025-111247/report.md
+
+✔ ground-truth check passed

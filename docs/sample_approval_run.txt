@@ -1,0 +1,36 @@
+Scenario: High-value invoice: approval gate + hidden PO rule  faults={}
+
+▶ Task: Find the latest invoice from Initech, extract the amount and due date, and enter it into AcmePay.
+  brain=OfflineBrain
+  💭 Planning the work.
+  [ 1] update_plan {'steps': '["Find invoices from \'Initech\' in inbox/", \'Read them, ignore non-invo…'}
+       ✓  Plan recorded.
+  [ 2] search_files {'query': 'Initech', 'directory': 'inbox'}
+       ✓  inbox/initech_2026_q4.pdf: (filename match) initech_2026_q4.pdf
+  [ 3] read_file {'path': 'inbox/initech_2026_q4.pdf'}
+       ✓  Initech LLC
+  [ 4] remember {'key': 'invoice', 'source': 'inbox/initech_2026_q4.pdf', 'value': 'vendor=Initech LLC; number=IN-30418; issued=2026-10-10; due=2026-11-09…'}
+       ✓  Remembered invoice.
+  [ 5] web_open {'url': 'http://127.0.0.1:34895/bills'}
+       ✓  http://127.0.0.1:34895/login?next=/bills | TITLE: Sign in - AcmePay
+  💭 The app wants a login; authenticating with the sandbox credentials.
+  [ 6] web_submit_form {'form_id': 'F1', 'values': "{'username': '{{secret:ERP_USERNAME}}', 'password': '{{secret:ERP_PASS…"}
+       ✓  http://127.0.0.1:34895/bills | TITLE: Bills - AcmePay
+  [ 7] web_open {'url': 'http://127.0.0.1:34895/bills/new'}
+       ✓  http://127.0.0.1:34895/bills/new | TITLE: New bill - AcmePay
+  [ 8] web_submit_form {'form_id': 'F1', 'values': "{'vendor': 'Initech LLC', 'invoice_number': 'IN-30418', 'amount': '184…"}
+       🔐 approval: amount 18,450.00 >= approval threshold 5,000 -> yes
+       ✗ permanent http://127.0.0.1:34895/bills | TITLE: New bill - AcmePay
+  [ 9] remember {'key': 'po_rule', 'value': 'AcmePay requires a PO number for bills over 10,000; using PO-88123 fro…', 'source': 'AcmePay validation'}
+       ✓  Remembered po_rule.
+  [10] web_submit_form {'form_id': 'F1', 'values': "{'vendor': 'Initech LLC', 'invoice_number': 'IN-30418', 'amount': '184…"}
+       ✓  http://127.0.0.1:34895/bills/1 | TITLE: Bill #1 - AcmePay
+  [11] finish {'outcome': 'success', 'summary': 'Entered Initech LLC invoice IN-30418 into AcmePay as bill #1: 18,450.0…', 'claims': "[{'statement': 'AcmePay has a bill for invoice IN-30418 with the right…"}
+       🔎 verify: PASS All 4 expected values found at http://127.0.0.1:34895/bills/1.
+       ✓  All claims verified independently. Run complete.
+
+■ COMPLETED  (11 steps, 0.0s)
+  Entered Initech LLC invoice IN-30418 into AcmePay as bill #1: 18,450.00 USD, due 2026-11-09 (latest invoice by date, from inbox/initech_2026_q4.pdf).
+  report: /home/claude/ai-task-worker/runs/20261025-111153/report.md
+
+✔ ground-truth check passed
